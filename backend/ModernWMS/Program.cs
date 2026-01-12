@@ -29,7 +29,8 @@ namespace ModernWMS
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    webBuilder.UseUrls("http://*:5555")
+                    var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+                    webBuilder.UseUrls($"http://127.0.0.1:{port}")
                     .UseStartup<Startup>()
                     .UseKestrel(opt => opt.Limits.MaxRequestBodySize = null);
                 }).ConfigureLogging(logging =>

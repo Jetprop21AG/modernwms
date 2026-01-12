@@ -22,5 +22,22 @@ export default defineConfig({
         javascriptEnabled: true
       }
     }
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+    chunkSizeWarningLimit: 1500,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor': ['vue', 'vue-router', 'vuex', 'axios'],
+          'vuetify': ['vuetify'],
+          'excel': ['exceljs', 'xlsx', 'vxe-table']
+        }
+      }
+    }
+  },
+  server: {
+    port: parseInt(process.env.VITE_CLI_PORT || '5173')
   }
 })

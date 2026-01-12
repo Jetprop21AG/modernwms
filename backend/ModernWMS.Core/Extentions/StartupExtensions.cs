@@ -127,7 +127,7 @@ namespace ModernWMS.Core.Extentions
             app.UseStaticFiles();
             app.UseSwaggerConfigure(configuration);
             app.UseRouting();
-            app.UseMiddleware<ModernWMS.Core.Middleware.CorsMiddleware>();
+            app.UseMiddleware<ModernWMS.Core.Middleware.CorsMiddleware>(configuration);
             app.UseTokenGeneratorConfigure(configuration);
             app.UseAuthorization();
             app.UseMiddleware<GlobalExceptionMiddleware>();

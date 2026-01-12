@@ -13,6 +13,10 @@ namespace ModernWMS.Core.Middleware
         /// agent
         /// </summary>
         private readonly RequestDelegate _next;
+        /// <summary>
+        /// Allowed origins for CORS
+        /// </summary>
+        private readonly string[] _allowedOrigins;
         #endregion
 
         #region Constructor
@@ -21,9 +25,12 @@ namespace ModernWMS.Core.Middleware
         /// Constructor
         /// </summary>
         /// <param name="next">Delegate in next step</param>
-        public CorsMiddleware(RequestDelegate next)
+        /// <param name="configuration">Configuration for reading allowed origins</param>
+        public CorsMiddleware(RequestDelegate next, Microsoft.Extensions.Configuration.IConfiguration configuration)
         {
             _next = next;
+            _allowedOrigins = configuration.GetSection("CorsSettings:AllowedOrigins").Get<string[]>()
+                ?? new[] { "http://localhost:5173", "http://localhost:5174" };
         }
         #endregion
 
@@ -34,10 +41,18 @@ namespace ModernWMS.Core.Middleware
         /// <returns></returns>
         public Task Invoke(HttpContext httpContext)
         {
+            var origin = httpContext.Request.Headers["Origin"].ToString();
+
+            // Validate origin against whitelist
+            if (!string.IsNullOrEmpty(origin) && !_allowedOrigins.Contains(origin))
+            {
+                // Reject unauthorized origins - don't add CORS headers
+                return _next.Invoke(httpContext);
+            }
 
             if (httpContext.Request.Method == "OPTIONS")
             {
-                httpContext.Response.Headers.Add("Access-Control-Allow-Origin", httpContext.Request.Headers["Origin"]);
+                httpContext.Response.Headers.Add("Access-Control-Allow-Origin", origin);
                 httpContext.Response.Headers.Add("Access-Control-Allow-Headers", httpContext.Request.Headers["Access-Control-Request-Headers"]);
                 httpContext.Response.Headers.Add("Access-Control-Allow-Methods", "PUT,POST,GET,DELETE,OPTIONS,HEAD,PATCH");
                 httpContext.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
@@ -45,9 +60,10 @@ namespace ModernWMS.Core.Middleware
                 httpContext.Response.StatusCode = StatusCodes.Status200OK;
                 return Task.CompletedTask;
             }
-            if (httpContext.Request.Headers["Origin"] != "")
+
+            if (!string.IsNullOrEmpty(origin))
             {
-                httpContext.Response.Headers.Add("Access-Control-Allow-Origin", httpContext.Request.Headers["Origin"]);
+                httpContext.Response.Headers.Add("Access-Control-Allow-Origin", origin);
             }
 
             httpContext.Response.Headers.Add("Access-Control-Allow-Headers", httpContext.Request.Headers["Access-Control-Request-Headers"]);
